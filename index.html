@@ -1,0 +1,746 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  BookOpen, 
+  Brain, 
+  User, 
+  Activity, 
+  Settings, 
+  CheckCircle, 
+  Printer, 
+  ChevronRight, 
+  ChevronLeft,
+  Sparkles,
+  Bot,
+  Blocks,
+  Puzzle,
+  Eye,
+  Ear,
+  Hand,
+  Lightbulb,
+  FileText,
+  AlertCircle,
+  RefreshCw,
+  Lock,
+  AlertTriangle,
+  X,
+  Download,
+  Info
+} from 'lucide-react';
+
+// --- DADOS ESTÁTICOS ---
+
+const SESI_SCHOOLS = [
+  "Aparecida", "Campinas", "Canaã", "Catalão", "Celso Charuri",
+  "Colorado", "Crixás", "Goianésia", "Itumbiara", "Jaiara",
+  "Jundiaí", "Luziânia", "Minaçu", "Mineiros", "Niquelândia",
+  "Planalto", "Rio Verde", "Universitário"
+].sort();
+
+const SCHOOL_GRADES = [
+  "Educação Infantil - Grupo 1", "Educação Infantil - Grupo 2", 
+  "Educação Infantil - Grupo 3", "Educação Infantil - Grupo 4", 
+  "Educação Infantil - Grupo 5", "1º Ano - Ensino Fundamental", 
+  "2º Ano - Ensino Fundamental", "3º Ano - Ensino Fundamental", 
+  "4º Ano - Ensino Fundamental", "5º Ano - Ensino Fundamental", 
+  "6º Ano - Ensino Fundamental", "7º Ano - Ensino Fundamental", 
+  "8º Ano - Ensino Fundamental", "9º Ano - Ensino Fundamental", 
+  "1ª Série - Novo Ensino Médio", "2ª Série - Novo Ensino Médio", 
+  "3ª Série - Novo Ensino Médio", "EJA - Educação de Jovens e Adultos"
+];
+
+// Dados enriquecidos com notas didáticas para os cards
+const DIAGNOSIS_OPTIONS = [
+  { id: 'TEA', label: 'TEA (Autismo)', desc: 'Nota: Foco em estruturação e redução de estímulos. Priorize previsibilidade.' },
+  { id: 'TDAH', label: 'TDAH', desc: 'Nota: Déficit em funções executivas. Necessita de tarefas curtas e feedback visual imediato.' },
+  { id: 'DI', label: 'Deficiência Intelectual', desc: 'Nota: Dificuldade em abstração. O currículo deve ser funcional e concreto (vida prática).' },
+  { id: 'DV', label: 'Deficiência Visual', desc: 'Nota: Requer audiodescrição constante e recursos táteis/sonoros.' },
+  { id: 'DA', label: 'Deficiência Auditiva', desc: 'Nota: Apoio visual é crucial. Use LIBRAS se for a L1 do aluno.' },
+  { id: 'Outro', label: 'Outro/Em Investigação', desc: 'Nota: Para alunos com laudos pendentes ou dificuldades de aprendizagem inespecíficas.' }
+];
+
+const INTERESTS_OPTIONS = [
+  { id: 'Robótica', icon: Bot, desc: 'Estimula lógica sequencial (algoritmos) e causa-efeito.' },
+  { id: 'Artes', icon: Sparkles, desc: 'Trabalha coordenação fina e expressão não-verbal.' },
+  { id: 'Tecnologia', icon: Settings, desc: 'Engajamento alto. Útil para gamificação do conteúdo.' },
+  { id: 'Dinossauros', icon: Brain, desc: 'Hiperfoco comum. Use para categorização e ciências.' },
+  { id: 'Esportes', icon: Activity, desc: 'Desenvolve motricidade grossa e regras sociais.' },
+  { id: 'Lego', icon: Blocks, desc: 'Excelente para visão espacial e seguir instruções.' },
+  { id: 'Jogos', icon: Puzzle, desc: 'Treina tolerância à frustração e turnos (esperar a vez).' },
+  { id: 'Música', icon: Ear, desc: 'Auxilia na consciência fonológica e ritmo da fala.' }
+];
+
+const KNOWLEDGE_BASE = {
+  strategies: {
+    TEA: {
+      general: "Estruturação visual e previsibilidade são fundamentais. O cérebro autista muitas vezes processa melhor informações visuais do que verbais. O aluno beneficia-se de rotinas claras (início, meio e fim) e redução de estímulos sensoriais concorrentes.",
+      inclusive: [
+        { title: "Método TEACCH Visual", desc: "Uso de agenda visual na carteira (Roda -> Atividade -> Lanche) e delimitação física do espaço com fita adesiva." },
+        { title: "Robótica Social (Inclusão)", desc: "Colocar o aluno como 'Engenheiro de Peças' (classificador) no grupo de robótica. Valoriza a habilidade de sistematização e reduz a pressão social direta." }
+      ],
+      exclusive: [
+        { title: "Método ABA (Tentativa Discreta)", desc: "Treino intensivo de nomeação com reforço positivo imediato (ex: ficha/token) para consolidar pré-requisitos." }
+      ],
+      literacy: "Método Fônico com Apoio Gestual (Boquinhas) - Associa som à articulação, oferecendo uma pista visual concreta para o som abstrato.",
+      resources: ["Agenda Visual", "Fones abafadores (se houver hipersensibilidade auditiva)", "Lego Education"]
+    },
+    TDAH: {
+      general: "O desafio central está nas Funções Executivas (controle inibitório e memória de trabalho). O aluno precisa de 'externalização' do tempo e da motivação através de feedback imediato.",
+      inclusive: [
+        { title: "Gamificação e Feedback Rápido", desc: "Fragmentar tarefas longas em 'missões' curtas. A cada 3 linhas escritas, o aluno ganha um 'power-up' ou adesivo." },
+        { title: "Assento Preferencial", desc: "Sentar nas fileiras da frente, longe de portas/janelas. Permitir pausas ativas funcionais (ex: apagar o quadro)." }
+      ],
+      exclusive: [
+        { title: "Treino de Funções Executivas", desc: "Uso de timers visuais (Pomodoro) e checklists de planejamento ('O que preciso para começar?')." }
+      ],
+      literacy: "Leitura Sussurrada (Sussurrofone) - O feedback auditivo da própria voz ajuda a manter o foco na decodificação e bloqueia ruídos externos.",
+      resources: ["Timers visuais", "Sussurrofone", "Apps de Gamificação"]
+    },
+    DI: {
+      general: "Necessidade de concretude e generalização. A abstração é difícil, portanto o ensino deve conectar-se à vida prática (Currículo Funcional).",
+      inclusive: [
+        { title: "Adaptação Curricular de Acesso", desc: "Simplificação textual: frases curtas, ordem direta, fonte ampliada e imagens de apoio ao lado do texto." },
+        { title: "Aprendizagem Cooperativa", desc: "Pareamento com colega tutor para leitura compartilhada (Vygotsky: Zona de Desenvolvimento Proximal)." }
+      ],
+      exclusive: [
+        { title: "Currículo Funcional Natural", desc: "Simulação de situações reais (supermercado, leitura de rótulos/placas) para dar sentido imediato à leitura." }
+      ],
+      literacy: "Método Global de Palavras-Chave (Nome, Escola, Perigo, Banheiro) para garantir autonomia rápida, antes da silabação.",
+      resources: ["Materiais Concretos (Maker)", "Cédulas/Moedas de brinquedo", "Flashcards personalizados com fotos reais"]
+    },
+    DV: { // Deficiência Visual
+      general: "O mundo chega através do tato e da audição. A descrição verbal constante é essencial para evitar o isolamento informacional.",
+      inclusive: [
+        { title: "Lego Braille Bricks", desc: "Montagem de palavras com peças híbridas (tinta + braille) para inclusão reversa (videntes e cegos brincam juntos)." },
+        { title: "Audiodescrição Pedagógica", desc: "O professor deve verbalizar tudo o que escreve na lousa simultaneamente." }
+      ],
+      exclusive: [
+        { title: "Tecnologia Assistiva Avançada", desc: "Treino de uso do OrCam MyEye e leitores de tela (NVDA) para autonomia na leitura e pesquisa." }
+      ],
+      literacy: "Sistema Braille e/ou uso intensivo de recursos auditivos e táteis (letras de lixa).",
+      resources: ["OrCam MyEye", "Lego Braille Bricks", "Arquivos STL (Impressão 3D de relevos)"]
+    },
+    Padrao: {
+      general: "Estudante beneficia-se de metodologias ativas e multissensoriais, alinhadas à proposta socioconstrutivista do SESI.",
+      inclusive: [
+        { title: "Abordagem Multissensorial", desc: "Uso simultâneo de canais visuais, auditivos e cinestésicos para criar redundância cognitiva e fixar conteúdo." }
+      ],
+      exclusive: [
+        { title: "Reforço Específico", desc: "Atividades focadas nas lacunas de aprendizagem identificadas na sondagem inicial." }
+      ],
+      literacy: "Método Fônico Sistemático com apoio de consciência fonológica.",
+      resources: ["Jogos Pedagógicos", "Biblioteca Digital", "Plataformas Adaptativas"]
+    }
+  },
+  sesiContext: {
+    robotics: "A Robótica Educacional (Lego Spike/WeDo) desenvolve sequenciamento lógico (algoritmo) e interação social mediada pelo objeto.",
+    maker: "O Espaço Maker (FabLab) permite materializar conceitos abstratos (letras 3D, massinha), essencial para concretizar o aprendizado em DI e TEA.",
+    tech: "Tecnologias como OrCam e Tablets garantem acessibilidade, equidade e engajamento digital para nativos digitais."
+  }
+};
+
+const LOGO_URL = "https://i.postimg.cc/HW8gFXdf/marca-SESI-2024-completa-negativada.png";
+
+// --- COMPONENTES AUXILIARES ---
+
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black bg-opacity-60 p-4 animate-fadeIn">
+      <div className="bg-white rounded-lg shadow-2xl max-w-sm w-full overflow-hidden border border-gray-200">
+        <div className="bg-yellow-50 p-4 border-b border-yellow-100 flex items-center gap-3">
+          <AlertTriangle className="w-6 h-6 text-yellow-600" />
+          <h3 className="font-bold text-yellow-900">{title}</h3>
+        </div>
+        <div className="p-6">
+          <p className="text-gray-700">{message}</p>
+        </div>
+        <div className="bg-gray-50 p-4 flex justify-end gap-3 border-t border-gray-100">
+          <button 
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-gray-700 font-medium hover:bg-gray-200 transition-colors border border-gray-300"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="button"
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Header = () => (
+  <header className="bg-blue-900 text-white p-4 md:p-6 shadow-lg sticky top-0 z-40 screen-only">
+    <div className="max-w-5xl mx-auto flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <Bot className="w-10 h-10 text-yellow-400" />
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight leading-tight">Assistente Virtual de<br className="md:hidden"/> Alfabetização Inclusiva</h1>
+          <p className="text-blue-200 text-xs md:text-sm">Rede SESI - Baseado no Relatório Técnico-Pedagógico</p>
+        </div>
+      </div>
+      <div className="hidden md:block">
+        <img src={LOGO_URL} alt="Marca SESI" className="h-10 object-contain opacity-90" />
+      </div>
+    </div>
+  </header>
+);
+
+const ProgressBar = ({ currentStep, totalSteps }) => {
+  const progress = ((currentStep + 1) / totalSteps) * 100;
+  return (
+    <div className="w-full bg-gray-200 h-2 rounded-full mt-2 overflow-hidden screen-only">
+      <div 
+        className="bg-blue-600 h-2 transition-all duration-500 ease-out"
+        style={{ width: `${progress}%` }}
+      ></div>
+    </div>
+  );
+};
+
+const DidacticBlock = ({ title, text, icon: Icon = BookOpen, type = "info" }) => {
+  const styles = type === "tip" 
+    ? "bg-yellow-50 border-yellow-400 text-yellow-900" 
+    : type === "note" 
+      ? "bg-green-50 border-green-500 text-green-900"
+      : "bg-blue-50 border-blue-500 text-blue-900";
+    
+  const iconColor = type === "tip" 
+    ? "text-yellow-600" 
+    : type === "note"
+      ? "text-green-600"
+      : "text-blue-600";
+
+  return (
+    <div className={`${styles} border-l-4 p-4 rounded-r-lg mb-6 animate-fadeIn shadow-sm`}>
+      <div className="flex items-start gap-3">
+        <Icon className={`w-6 h-6 ${iconColor} mt-1 flex-shrink-0`} />
+        <div>
+          <h4 className="font-bold text-sm mb-1 uppercase tracking-wide">{title}</h4>
+          <p className="text-sm leading-relaxed opacity-90 text-justify">{text}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- RELATÓRIO DE IMPRESSÃO (ISOLADO PARA O PDF) ---
+
+const ReportView = ({ data }) => {
+  const { student, profileData, customRecommendations, literacyMethod, date } = data;
+  return (
+    <div className="w-full bg-white text-black font-sans leading-relaxed text-sm md:text-base p-0 m-0">
+      
+      {/* Cabeçalho do Relatório */}
+      <div className="border-b-4 border-blue-900 pb-6 mb-8 flex justify-between items-center bg-blue-900 text-white p-6 print-color-exact">
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-bold uppercase tracking-tight">Relatório Técnico-Pedagógico</h1>
+          <h2 className="text-sm opacity-80 mt-1 uppercase tracking-wide">Fundamentos para PEI (Plano Educacional Individualizado)</h2>
+        </div>
+        <img src={LOGO_URL} alt="Marca SESI" className="h-12 object-contain" />
+      </div>
+
+      <div className="px-8 pb-8">
+        <div className="flex justify-between text-xs text-gray-500 mb-6 border-b pb-2">
+            <p>Emissão: {date}</p>
+            <p>Ref: FO-351-DIGITAL/2024</p>
+        </div>
+
+        {/* 1. Identificação */}
+        <div className="mb-8 p-5 bg-gray-50 border border-gray-200 rounded-lg print-color-exact">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 border-b border-gray-300 pb-2">1. Identificação e Perfil do Estudante</h3>
+            <div className="grid grid-cols-2 gap-y-3 gap-x-8">
+            <p><span className="font-bold text-gray-700">Nome:</span> {student.studentName}</p>
+            <p><span className="font-bold text-gray-700">Idade:</span> {student.age} anos</p>
+            <p><span className="font-bold text-gray-700">Escola:</span> {student.school}</p>
+            <p><span className="font-bold text-gray-700">Ano/Série:</span> {student.grade}</p>
+            <div className="col-span-2 pt-2 border-t border-gray-200 mt-1">
+                <p><span className="font-bold text-gray-700">Hipótese Diagnóstica Principal:</span> <span className="bg-blue-100 px-2 py-0.5 rounded text-blue-900 font-semibold border border-blue-200">{student.diagnosis}</span></p>
+                {student.diagnosisDetail && <p className="mt-1 text-sm text-gray-600 italic">Notas Clínicas: {student.diagnosisDetail}</p>}
+            </div>
+            <p className="col-span-2"><span className="font-bold text-gray-700">Interesses Mapeados (Engajamento):</span> {student.interests.join(", ") || "Não informado"}</p>
+            </div>
+        </div>
+
+        {/* 2. Fundamentação */}
+        <div className="mb-8">
+            <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wider mb-4 border-b-2 border-blue-100 pb-2">2. Fundamentação Neuroeducacional</h3>
+            <div className="bg-blue-50 p-4 rounded-lg mb-6 border-l-4 border-blue-600 print-color-exact">
+            <p className="text-justify italic text-gray-800 leading-relaxed">"{profileData.general}"</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <h4 className="font-bold text-blue-800 mb-3 flex items-center gap-2 border-b pb-1"><User className="w-4 h-4" /> Estratégias Inclusivas (Sala Regular)</h4>
+                <ul className="space-y-4">
+                {profileData.inclusive.map((item, idx) => (
+                    <li key={idx} className="text-sm">
+                    <strong className="block text-gray-900 font-bold mb-1">{item.title}</strong> 
+                    <span className="text-gray-700 leading-snug">{item.desc}</span>
+                    </li>
+                ))}
+                </ul>
+            </div>
+            <div>
+                <h4 className="font-bold text-blue-800 mb-3 flex items-center gap-2 border-b pb-1"><Sparkles className="w-4 h-4" /> Estratégias Exclusivas (AEE/Individual)</h4>
+                <ul className="space-y-4">
+                {profileData.exclusive.map((item, idx) => (
+                    <li key={idx} className="text-sm">
+                    <strong className="block text-gray-900 font-bold mb-1">{item.title}</strong> 
+                    <span className="text-gray-700 leading-snug">{item.desc}</span>
+                    </li>
+                ))}
+                </ul>
+            </div>
+            </div>
+        </div>
+
+        {/* 3. Plano de Alfabetização */}
+        <div className="mb-8 break-inside-avoid">
+            <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wider mb-4 border-b-2 border-blue-100 pb-2">3. Plano de Alfabetização e Recursos Tecnológicos</h3>
+            <div className="mb-6">
+            <h4 className="font-bold text-gray-800 flex items-center gap-2 mb-2"><BookOpen className="w-4 h-4" /> Método de Alfabetização Recomendado</h4>
+            <div className="bg-gray-100 p-4 rounded border-l-4 border-green-500 text-gray-800 shadow-sm print-color-exact">
+                {literacyMethod}
+            </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+            <div>
+                <h4 className="font-bold text-gray-800 mb-3">Recursos da Rede SESI</h4>
+                <ul className="space-y-2">
+                {profileData.resources.map((res, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                    <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" /> 
+                    <span>{res}</span>
+                    </li>
+                ))}
+                </ul>
+            </div>
+            {customRecommendations.length > 0 && (
+                <div>
+                <h4 className="font-bold text-gray-800 mb-3">Personalização (Interesses & Habilidades)</h4>
+                <ul className="space-y-2 text-sm">
+                    {customRecommendations.map((rec, i) => (
+                    <li key={i} className="bg-yellow-50 p-3 rounded border border-yellow-200 print-color-exact">
+                        <strong className="text-yellow-900 block mb-1">{rec.type}:</strong> 
+                        <span className="text-gray-700">{rec.text}</span>
+                    </li>
+                    ))}
+                </ul>
+                </div>
+            )}
+            </div>
+        </div>
+
+        {/* Assinaturas */}
+        <div className="mt-16 pt-8 border-t border-gray-300 break-inside-avoid">
+            <div className="grid grid-cols-2 gap-16">
+            <div className="text-center">
+                <div className="border-t border-black mb-2"></div>
+                <p className="font-bold text-sm">Professor(a) Regente</p>
+                <p className="text-xs text-gray-500">Responsável Pedagógico</p>
+            </div>
+            <div className="text-center">
+                <div className="border-t border-black mb-2"></div>
+                <p className="font-bold text-sm">Coordenação Pedagógica / AEE</p>
+                <p className="text-xs text-gray-500">Validação Técnica</p>
+            </div>
+            </div>
+            <p className="text-center text-[10px] text-gray-400 mt-12 uppercase tracking-widest">
+            Documento gerado automaticamente pelo Assistente Virtual SESI • Baseado em evidências científicas e legislação vigente.
+            </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- COMPONENTE PRINCIPAL (APP) ---
+
+export default function App() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  
+  const initialFormState = {
+    studentName: '',
+    age: '',
+    grade: '',
+    school: '',
+    diagnosis: '', 
+    diagnosisDetail: '',
+    communication: 'verbal',
+    motorSkills: 'adequado',
+    sensoryProfile: [], 
+    interests: [],
+    observations: ''
+  };
+  
+  const [formData, setFormData] = useState(initialFormState);
+  const [report, setReport] = useState(null);
+
+  useEffect(() => {
+    document.title = "Assistente PEI - SESI Alfabetização Inclusiva";
+  }, []);
+
+  const steps = [
+    { id: 1, title: 'Identificação', icon: User },
+    { id: 2, title: 'Perfil Clínico', icon: Activity },
+    { id: 3, title: 'Funcionalidade', icon: Brain },
+    { id: 4, title: 'Interesses', icon: Sparkles },
+    { id: 5, title: 'Diagnóstico', icon: BookOpen }
+  ];
+
+  const handleInputChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
+
+  const handleCheckboxChange = (field, value) => {
+    setFormData(prev => {
+      const current = prev[field];
+      if (current.includes(value)) return { ...prev, [field]: current.filter(item => item !== value) };
+      return { ...prev, [field]: [...current, value] };
+    });
+  };
+
+  const isStepValid = () => {
+    switch(currentStep) {
+      case 0: return formData.studentName.trim() !== '' && formData.age.trim() !== '' && formData.grade !== '' && formData.school !== '';
+      case 1: return formData.diagnosis !== '';
+      default: return true;
+    }
+  };
+
+  const generateReport = () => {
+    setIsGenerating(true);
+    window.scrollTo(0, 0);
+    setTimeout(() => {
+      const profile = KNOWLEDGE_BASE.strategies[formData.diagnosis] || KNOWLEDGE_BASE.strategies.Padrao;
+      let customRecommendations = [];
+      if (formData.interests.includes('Robótica') || formData.interests.includes('Tecnologia')) customRecommendations.push({ type: 'Recurso SESI', text: `Aproveitar o hiperfoco em tecnologia para utilizar a ${KNOWLEDGE_BASE.sesiContext.robotics}` });
+      if (formData.interests.includes('Artes') || formData.motorSkills === 'dificuldade fina') customRecommendations.push({ type: 'Maker/FabLab', text: `Utilizar o Espaço Maker. ${KNOWLEDGE_BASE.sesiContext.maker}` });
+      if (formData.sensoryProfile.includes('auditivo')) customRecommendations.push({ type: 'Sensorial', text: 'Aluno com perfil auditivo: priorizar audiolivros e instruções verbais.' });
+
+      setReport({
+        date: new Date().toLocaleDateString('pt-BR'),
+        student: formData,
+        profileData: profile,
+        customRecommendations: customRecommendations,
+        literacyMethod: profile.literacy
+      });
+      setIsGenerating(false);
+      setCurrentStep(4);
+    }, 1500);
+  };
+
+  const nextStep = () => { if (isStepValid()) { if (currentStep < steps.length - 1) { currentStep === 3 ? generateReport() : (setCurrentStep(prev => prev + 1), window.scrollTo(0, 0)); } } };
+  const prevStep = () => { setCurrentStep(prev => prev - 1); window.scrollTo(0, 0); };
+  const handleResetRequest = () => setShowResetModal(true);
+  const confirmReset = () => { setFormData(initialFormState); setReport(null); setCurrentStep(0); setShowResetModal(false); window.scrollTo(0, 0); };
+  
+  // Função de impressão robusta
+  const printReport = () => {
+    // Timeout para garantir que o navegador "perceba" as mudanças de CSS
+    setTimeout(() => {
+        window.print();
+    }, 100);
+  };
+  
+  const isCurrentStepValid = isStepValid();
+
+  // Função auxiliar para renderizar o conteúdo do passo atual
+  const renderStepContent = () => {
+    switch(currentStep) {
+      case 0: return (
+        <div className="space-y-6 animate-fadeIn">
+          <h2 className="text-xl font-bold text-gray-800 border-b pb-2">I. Identificação do Estudante</h2>
+          
+          <DidacticBlock 
+            title="Importância do Registro" 
+            text="O preenchimento preciso destes dados iniciais assegura a rastreabilidade do histórico escolar e garante que as adaptações propostas estejam alinhadas à etapa de desenvolvimento (idade/série) e ao contexto da unidade escolar, conforme previsto na LDB (Lei 9.394/96)." 
+            icon={FileText} 
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Nome Completo *</label>
+              <input type="text" className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.studentName} onChange={(e) => handleInputChange('studentName', e.target.value)} placeholder="Ex: João da Silva" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Idade *</label>
+              <input type="number" className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.age} onChange={(e) => handleInputChange('age', e.target.value)} placeholder="Ex: 7" />
+              <p className="text-xs text-gray-500 mt-1">Fundamental para definir a adequação idade/série.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Ano/Série *</label>
+              <select className="w-full p-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500" value={formData.grade} onChange={(e) => handleInputChange('grade', e.target.value)}>
+                <option value="">Selecione</option>{SCHOOL_GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Unidade SESI *</label>
+              <select className="w-full p-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500" value={formData.school} onChange={(e) => handleInputChange('school', e.target.value)}>
+                <option value="">Selecione</option>{SESI_SCHOOLS.map(s => <option key={s} value={`SESI ${s}`}>{`SESI ${s}`}</option>)}
+              </select>
+            </div>
+          </div>
+        </div>
+      );
+      case 1: return (
+        <div className="space-y-6 animate-fadeIn">
+          <h2 className="text-xl font-bold text-gray-800 border-b pb-2">II. Perfil Clínico e Necessidades</h2>
+          
+          <DidacticBlock 
+            title="Diagnóstico como Ponto de Partida" 
+            text="Nesta etapa, o objetivo não é rotular o estudante, mas compreender sua condição neurobiológica global. O diagnóstico serve como um 'mapa inicial' para que o assistente filtre as evidências científicas mais adequadas (ex: estratégias visuais para TEA)." 
+            icon={Activity} 
+          />
+          
+          <p className="text-gray-600 text-sm font-medium mb-2">Selecione a hipótese diagnóstica ou condição principal <span className="text-red-500">*</span>:</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {DIAGNOSIS_OPTIONS.map((opt) => (
+              <button 
+                key={opt.id} 
+                type="button" 
+                onClick={() => handleInputChange('diagnosis', opt.id)} 
+                className={`p-4 rounded-xl border text-left transition-all hover:shadow-md flex flex-col gap-2 ${formData.diagnosis === opt.id ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600' : 'border-gray-200 hover:border-blue-300 bg-white'}`}
+              >
+                <div className="flex justify-between w-full items-start">
+                  <span className={`font-bold ${formData.diagnosis === opt.id ? 'text-blue-800' : 'text-gray-800'}`}>{opt.label}</span>
+                  {formData.diagnosis === opt.id && <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />}
+                </div>
+                <p className="text-xs text-gray-500 leading-snug">{opt.desc}</p>
+              </button>
+            ))}
+          </div>
+          
+          <DidacticBlock 
+            title="Nota sobre 'Outro/Neurotípico'" 
+            text="Selecione esta opção para alunos com dificuldades de aprendizagem inespecíficas ou em processo de investigação diagnóstica." 
+            type="note" 
+            icon={Info}
+          />
+
+          <div className="mt-4">
+            <label className="block text-sm font-semibold mb-1">Detalhes Adicionais</label>
+            <textarea className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Dica: Cite medicamentos em uso, terapias externas (Fono, TO) ou histórico de crises." value={formData.diagnosisDetail} onChange={(e) => handleInputChange('diagnosisDetail', e.target.value)} />
+          </div>
+        </div>
+      );
+      case 2: return (
+        <div className="space-y-6 animate-fadeIn">
+          <h2 className="text-xl font-bold text-gray-800 border-b pb-2">III. Funcionalidade e Estilo de Aprendizagem</h2>
+          
+          <DidacticBlock 
+            title="Foco na Funcionalidade (CIF)" 
+            text="Inspirado na Classificação Internacional de Funcionalidade (CIF), este módulo foca no que o aluno PODE fazer e como ele interage com o mundo. Entender o canal sensorial preferencial é chave para adaptar materiais." 
+            icon={Brain} 
+          />
+          
+          <div className="bg-white p-4 border rounded-lg shadow-sm mb-4">
+            <label className="block text-sm font-bold mb-2 flex items-center gap-2"><Bot className="w-4 h-4 text-purple-600"/> Comunicação Predominante</label>
+            <div className="flex flex-col md:flex-row gap-4">
+              {['Verbal Fluente', 'Verbal com Dificuldades', 'Não-Verbal/Gestual'].map(opt => (
+                <label key={opt} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded w-full border border-transparent hover:border-gray-200">
+                  <input type="radio" name="comm" checked={formData.communication === opt} onChange={() => handleInputChange('communication', opt)} className="text-blue-600 focus:ring-blue-500" />
+                  <span className="text-sm font-medium">{opt}</span>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-2 ml-1">Nota: Se "Não-Verbal", o sistema sugerirá Comunicação Aumentativa e Alternativa (CAA).</p>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-bold mb-2 flex items-center gap-2"><Eye className="w-4 h-4 text-teal-600"/> Canal Sensorial Preferencial</label>
+            <p className="text-xs text-gray-500 mb-2">Como o aluno melhor retém a informação?</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[{ id: 'visual', label: 'Visual', icon: Eye, desc: "Aprende vendo (Imagens, vídeos, esquemas)" }, { id: 'auditivo', label: 'Auditivo', icon: Ear, desc: "Aprende ouvindo (Músicas, instruções verbais)" }, { id: 'cinestesico', label: 'Cinestésico', icon: Hand, desc: "Aprende fazendo (Toque, movimento, montagem)" }].map(s => (
+                <button key={s.id} type="button" onClick={() => handleCheckboxChange('sensoryProfile', s.id)} className={`p-4 border rounded-lg flex flex-col items-start gap-2 transition-all hover:shadow-md text-left ${formData.sensoryProfile.includes(s.id) ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white hover:bg-gray-50'}`}>
+                  <div className="flex items-center gap-2">
+                    <s.icon className={`w-5 h-5 ${formData.sensoryProfile.includes(s.id) ? 'text-blue-600' : 'text-gray-500'}`}/>
+                    <span className="font-semibold text-sm">{s.label}</span>
+                  </div>
+                  <span className="text-xs text-gray-500 leading-snug">{s.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white p-4 border rounded-lg shadow-sm">
+            <label className="block text-sm font-bold mb-2 flex items-center gap-2"><Activity className="w-4 h-4 text-red-500"/> Desenvolvimento Motor</label>
+            <select value={formData.motorSkills} onChange={(e) => handleInputChange('motorSkills', e.target.value)} className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-white">
+              <option value="adequado">Desenvolvimento Típico</option>
+              <option value="dificuldade fina">Dificuldade Motora Fina (Ex: pegar no lápis)</option>
+              <option value="dificuldade grossa">Dificuldade Motora Grossa (Ex: equilíbrio)</option>
+              <option value="hipotonia">Hipotonia (Baixo tônus muscular)</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-2">Nota: Impacta na recomendação de atividades Maker e Robótica (montagem de peças).</p>
+          </div>
+        </div>
+      );
+      case 3: return (
+        <div className="space-y-6 animate-fadeIn">
+          <h2 className="text-xl font-bold text-gray-800 border-b pb-2">IV. Interesses e Engajamento</h2>
+          
+          <DidacticBlock 
+            title="A Neurociência do Afeto" 
+            text="O cérebro aprende o que o emociona. Na rede SESI, utilizamos os interesses do aluno (hiperfocos) como 'iscas pedagógicas' para aumentar a produção de dopamina e a retenção de conteúdo." 
+            icon={Sparkles} 
+          />
+          
+          <p className="text-gray-600 text-sm mb-4">Selecione os temas que geram alto engajamento no aluno:</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {INTERESTS_OPTIONS.map(i => (
+              <button 
+                key={i.id} 
+                type="button" 
+                onClick={() => handleCheckboxChange('interests', i.id)} 
+                className={`p-4 border rounded-xl flex flex-col items-center gap-2 transition-all hover:shadow-md text-center ${formData.interests.includes(i.id) ? 'bg-blue-600 text-white shadow-lg scale-105' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                <i.icon className="w-6 h-6"/>
+                <span className="text-sm font-medium">{i.id}</span>
+                <span className={`text-[10px] leading-tight ${formData.interests.includes(i.id) ? 'text-blue-100' : 'text-gray-400'}`}>{i.desc}</span>
+              </button>
+            ))}
+          </div>
+          
+          <DidacticBlock 
+            title="Dica Pedagógica SESI" 
+            text="O assistente cruzará estes dados com os recursos da escola. Ex: Se o aluno gosta de 'Dinossauros', sugeriremos atividades de escavação no Espaço Maker para trabalhar motricidade." 
+            type="tip" 
+            icon={Lightbulb}
+          />
+        </div>
+      );
+      case 4: return (
+        <div className="animate-fadeIn">
+          <div className="bg-green-50 border border-green-200 p-6 rounded-xl text-center shadow-sm mb-6">
+            <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-3" />
+            <h2 className="text-2xl font-bold text-green-800">Diagnóstico Gerado com Sucesso!</h2>
+            <p className="text-green-700 mt-2">O assistente processou os dados e gerou um Plano de Atuação fundamentado. Revise as sugestões abaixo antes de imprimir.</p>
+          </div>
+          <div className="flex flex-col md:flex-row gap-4 justify-center items-center mb-8">
+            <button type="button" onClick={printReport} className="bg-blue-900 text-white px-8 py-4 rounded-lg font-bold shadow-lg hover:bg-blue-800 flex items-center gap-2 transition-transform hover:scale-105 active:scale-95">
+              <Printer className="w-5 h-5" /> Exportar Relatório (PDF)
+            </button>
+            <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-1 rounded border">
+                <AlertCircle className="w-4 h-4 text-blue-500"/>
+                Ao clicar, selecione "Salvar como PDF"
+            </div>
+            <button type="button" onClick={handleResetRequest} className="bg-gray-200 text-gray-700 px-6 py-4 rounded-lg font-bold hover:bg-gray-300 flex items-center gap-2 active:bg-gray-400">
+              <RefreshCw className="w-4 h-4" /> Novo Aluno
+            </button>
+          </div>
+          <div className="bg-white p-8 shadow-xl rounded-xl border border-gray-200 max-w-4xl mx-auto opacity-75 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer group" onClick={printReport}>
+             <div className="text-center mb-4 text-xs font-bold uppercase text-gray-500 group-hover:text-blue-600 transition-colors">Clique para visualizar a impressão</div>
+             <ReportView data={report} />
+          </div>
+        </div>
+      );
+      default: return null;
+    }
+  };
+
+  return (
+    <div id="app-container" className="min-h-screen bg-gray-50 text-gray-900 font-sans w-full overflow-x-hidden flex flex-col">
+      {/* CSS CRÍTICO E ESTRUTURAL */}
+      <style>{`
+        /* Reset para garantir altura total e evitar scroll duplo */
+        html, body, #root, #app-container {
+          min-height: 100vh;
+          width: 100%;
+          margin: 0;
+          padding: 0;
+        }
+
+        /* Classe utilitária para garantir cores na impressão */
+        .print-color-exact {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        /* Estilos de Impressão Isolados */
+        @media print {
+          /* Esconde a UI de tela */
+          .screen-only, header, footer, nav, .wizard-controls {
+            display: none !important;
+          }
+
+          /* Mostra e formata a UI de impressão */
+          #print-view { 
+            display: block !important; 
+            width: 100%;
+            height: auto;
+            position: absolute; /* Usamos absolute com top 0 para garantir que comece no início da folha */
+            top: 0; 
+            left: 0; 
+            background: white; 
+            color: black; 
+            z-index: 9999;
+          }
+          
+          /* Reseta o container pai para não cortar o conteúdo */
+          body, html, #root, #app-container {
+            height: auto !important;
+            overflow: visible !important;
+            background: white !important;
+            display: block !important;
+          }
+
+          /* Configurações de página (A4) */
+          @page { margin: 1.5cm; size: auto; }
+        }
+
+        /* Na tela normal, esconde a visão de impressão */
+        @media screen {
+          #print-view { display: none !important; }
+        }
+      `}</style>
+
+      <ConfirmationModal isOpen={showResetModal} onClose={() => setShowResetModal(false)} onConfirm={confirmReset} title="Novo Atendimento" message="Deseja limpar os dados atuais? O relatório atual será perdido." />
+
+      {/* CONTAINER DE TELA (SCREEN VIEW) */}
+      <div id="screen-view" className="flex-grow flex flex-col w-full screen-only">
+        <Header />
+        <main className="max-w-5xl w-full mx-auto p-4 md:p-8 flex-grow">
+          {currentStep < 4 && (
+            <div className="mb-8 wizard-controls">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-700 flex items-center gap-2">{steps[currentStep].icon && React.createElement(steps[currentStep].icon, { className: "w-5 h-5 text-blue-600" })} {steps[currentStep].title}</h2>
+                <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm border">Passo {currentStep + 1}/{steps.length}</span>
+              </div>
+              <ProgressBar currentStep={currentStep} totalSteps={steps.length} />
+            </div>
+          )}
+
+          <div className={`bg-white rounded-2xl shadow-xl p-6 md:p-10 transition-all w-full ${currentStep === 4 ? 'bg-transparent shadow-none p-0' : ''}`}>
+            {isGenerating ? (
+              <div className="flex flex-col items-center justify-center py-20 space-y-6">
+                <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+                <p className="text-lg font-semibold text-gray-600">Processando dados pedagógicos...</p>
+              </div>
+            ) : renderStepContent()}
+          </div>
+
+          {currentStep < 4 && !isGenerating && (
+            <div className="mt-8 flex justify-between items-center">
+              <button type="button" onClick={prevStep} disabled={currentStep === 0} className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors ${currentStep === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-200'}`}><ChevronLeft className="w-5 h-5" /> Voltar</button>
+              <button type="button" onClick={nextStep} disabled={!isCurrentStepValid} className={`flex items-center gap-2 px-8 py-3 rounded-lg font-bold shadow-lg transition-all ${!isCurrentStepValid ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 active:scale-95'}`}>{!isCurrentStepValid && <Lock className="w-4 h-4 mr-1" />} {currentStep === 3 ? 'Gerar Diagnóstico' : 'Próximo'} {currentStep === 3 ? <Brain className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}</button>
+            </div>
+          )}
+        </main>
+        <footer className="text-center text-gray-400 py-6 text-sm bg-white border-t mt-auto w-full">&copy; 2024 Rede SESI de Educação</footer>
+      </div>
+
+      {/* CONTAINER DE IMPRESSÃO (PRINT VIEW) - Renderizado apenas se houver relatório */}
+      {report && (
+        <div id="print-view" className="hidden print:block print:w-full print:absolute print:top-0 print:left-0 print:bg-white print:z-50">
+          <ReportView data={report} />
+        </div>
+      )}
+    </div>
+  );
+}
