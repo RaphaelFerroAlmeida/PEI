@@ -5,17 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assistente PEI - SESI Alfabetização Inclusiva</title>
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.js"></script>
-
+    <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Estilos Globais -->
     <style>
+        body { font-family: 'Inter', sans-serif; }
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -23,24 +29,95 @@
         .animate-fadeIn {
             animation: fadeIn 0.5s ease-out forwards;
         }
+
+        /* Ajustes de Impressão */
+        @media print {
+            .screen-only, header, footer, .wizard-controls, button {
+                display: none !important;
+            }
+            #print-view { 
+                display: block !important; 
+                width: 100%;
+                position: absolute;
+                top: 0; 
+                left: 0; 
+                background: white; 
+                z-index: 9999;
+            }
+            @page { margin: 1.5cm; size: auto; }
+            body, html, #root { height: auto !important; overflow: visible !important; }
+        }
+        
+        @media screen {
+            #print-view { display: none !important; }
+        }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 text-gray-900">
     <div id="root"></div>
 
     <script type="text/babel">
-        // --- ADAPTAÇÃO PARA RODAR NO BROWSER ---
+        // --- SISTEMA DE ÍCONES INTERNO (Para evitar erros de CDN) ---
+        // Implementação simplificada de ícones SVG para garantir funcionamento offline/sem dependências
+        
+        const IconBase = ({ children, className = "" }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className}
+            >
+                {children}
+            </svg>
+        );
+
+        // Mapa de Ícones utilizados na aplicação
+        const Icons = {
+            BookOpen: (props) => <IconBase {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></IconBase>,
+            Brain: (props) => <IconBase {...props}><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-4A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-4A2.5 2.5 0 0 0 14.5 2Z"/></IconBase>,
+            User: (props) => <IconBase {...props}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></IconBase>,
+            Activity: (props) => <IconBase {...props}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></IconBase>,
+            Settings: (props) => <IconBase {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></IconBase>,
+            CheckCircle: (props) => <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>,
+            Printer: (props) => <IconBase {...props}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></IconBase>,
+            ChevronRight: (props) => <IconBase {...props}><path d="m9 18 6-6-6-6"/></IconBase>,
+            ChevronLeft: (props) => <IconBase {...props}><path d="m15 18-6-6 6-6"/></IconBase>,
+            Sparkles: (props) => <IconBase {...props}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M9 5H5"/><path d="M19 19v4"/><path d="M23 21h-4"/></IconBase>,
+            Bot: (props) => <IconBase {...props}><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></IconBase>,
+            Blocks: (props) => <IconBase {...props}><rect width="7" height="7" x="14" y="3" rx="1"/><path d="M10 21V8a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1H3"/></IconBase>,
+            Puzzle: (props) => <IconBase {...props}><path d="M19.439 10c.011.017.021.034.031.052a3 3 0 0 1 .465 2.112 2.99 2.99 0 0 1-2.935 2.673h-1.071a2.95 2.95 0 0 0-2.825 2.115 2.993 2.993 0 0 0 1.258 3.218c.036.022.072.043.109.064a3 3 0 0 1-3.471 4.767 3 3 0 0 1-2.261-2.222 2.95 2.95 0 0 0-3.32-2.316 2.99 2.99 0 0 0-2.486 3.013c-.001.035-.001.07-.001.105a3 3 0 0 1-5.938-.567 2.99 2.99 0 0 1 1.764-2.735 2.95 2.95 0 0 0 1.764-3.535 2.993 2.993 0 0 0-2.114-1.956 3 3 0 0 1 .567-5.938c.035 0 .07 0 .105-.001a2.99 2.99 0 0 1 3.013-2.486 2.95 2.95 0 0 0 2.316-3.32 3 3 0 0 1 4.767-3.471c.021.037.042.073.064.109a2.993 2.993 0 0 0 3.218 1.258 2.95 2.95 0 0 0 2.115-2.825V3a2.99 2.99 0 0 1 2.673-2.935 3 3 0 0 1 2.112.465"/></IconBase>,
+            Eye: (props) => <IconBase {...props}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></IconBase>,
+            Ear: (props) => <IconBase {...props}><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1-4 0v-1a6.5 6.5 0 1 1 13 0v1a3.5 3.5 0 0 1-7 0"/></IconBase>,
+            Hand: (props) => <IconBase {...props}><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></IconBase>,
+            Lightbulb: (props) => <IconBase {...props}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2 1.5-3.5 0-2.25-1.75-4-4-4 2.25 0 4 1.75 4 4 0 1.5-.5 2.5-1.5 3.5-.8.8-1.3 1.5-1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></IconBase>,
+            FileText: (props) => <IconBase {...props}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></IconBase>,
+            AlertCircle: (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></IconBase>,
+            RefreshCw: (props) => <IconBase {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></IconBase>,
+            Lock: (props) => <IconBase {...props}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></IconBase>,
+            AlertTriangle: (props) => <IconBase {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></IconBase>,
+            X: (props) => <IconBase {...props}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconBase>,
+            Download: (props) => <IconBase {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></IconBase>,
+            Info: (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></IconBase>
+        };
+
+        // --- CONFIGURAÇÃO INICIAL DO APP ---
         const { useState, useEffect } = React;
         
-        // Extraindo ícones da biblioteca Lucide global
+        // Destruturação dos ícones a partir do objeto local 'Icons'
         const { 
             BookOpen, Brain, User, Activity, Settings, CheckCircle, Printer, 
             ChevronRight, ChevronLeft, Sparkles, Bot, Blocks, Puzzle, Eye, Ear, 
             Hand, Lightbulb, FileText, AlertCircle, RefreshCw, Lock, AlertTriangle, 
             X, Download, Info 
-        } = lucideReact;
+        } = Icons;
 
-        // --- DADOS ESTÁTICOS ---
+        // --- DADOS DO SISTEMA ---
 
         const SESI_SCHOOLS = [
             "Aparecida", "Campinas", "Canaã", "Catalão", "Celso Charuri",
@@ -150,7 +227,7 @@
             }
         };
 
-        const LOGO_URL = "https://i.postimg.cc/HW8gFXdf/marca-SESI-2024-completa-negativada.png";
+        const LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Sesi_logo.svg/2560px-Sesi_logo.svg.png"; // Usando logo SESI pública
 
         // --- COMPONENTES AUXILIARES ---
 
@@ -198,7 +275,7 @@
                 </div>
             </div>
             <div className="hidden md:block">
-                <img src={LOGO_URL} alt="Marca SESI" className="h-10 object-contain opacity-90" />
+                <img src={LOGO_URL} alt="Marca SESI" className="h-10 object-contain opacity-90 bg-white rounded p-1" />
             </div>
             </div>
         </header>
@@ -217,6 +294,9 @@
         };
 
         const DidacticBlock = ({ title, text, icon: Icon = BookOpen, type = "info" }) => {
+        // Fallback de segurança se o ícone for undefined
+        const SafeIcon = Icon || BookOpen;
+        
         const styles = type === "tip" 
             ? "bg-yellow-50 border-yellow-400 text-yellow-900" 
             : type === "note" 
@@ -232,7 +312,7 @@
         return (
             <div className={`${styles} border-l-4 p-4 rounded-r-lg mb-6 animate-fadeIn shadow-sm`}>
             <div className="flex items-start gap-3">
-                <Icon className={`w-6 h-6 ${iconColor} mt-1 flex-shrink-0`} />
+                <SafeIcon className={`w-6 h-6 ${iconColor} mt-1 flex-shrink-0`} />
                 <div>
                 <h4 className="font-bold text-sm mb-1 uppercase tracking-wide">{title}</h4>
                 <p className="text-sm leading-relaxed opacity-90 text-justify">{text}</p>
@@ -242,7 +322,7 @@
         );
         };
 
-        // --- RELATÓRIO DE IMPRESSÃO (ISOLADO PARA O PDF) ---
+        // --- VISÃO DE IMPRESSÃO (O RELATÓRIO) ---
 
         const ReportView = ({ data }) => {
         const { student, profileData, customRecommendations, literacyMethod, date } = data;
@@ -255,7 +335,7 @@
                 <h1 className="text-2xl font-bold uppercase tracking-tight">Relatório Técnico-Pedagógico</h1>
                 <h2 className="text-sm opacity-80 mt-1 uppercase tracking-wide">Fundamentos para PEI (Plano Educacional Individualizado)</h2>
                 </div>
-                <img src={LOGO_URL} alt="Marca SESI" className="h-12 object-contain" />
+                <img src={LOGO_URL} alt="Marca SESI" className="h-12 object-contain bg-white rounded p-1" />
             </div>
 
             <div className="px-8 pb-8">
@@ -288,7 +368,9 @@
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                        <h4 className="font-bold text-blue-800 mb-3 flex items-center gap-2 border-b pb-1"><User className="w-4 h-4" /> Estratégias Inclusivas (Sala Regular)</h4>
+                        <h4 className="font-bold text-blue-800 mb-3 flex items-center gap-2 border-b pb-1">
+                             {User && <User className="w-4 h-4" />} Estratégias Inclusivas (Sala Regular)
+                        </h4>
                         <ul className="space-y-4">
                         {profileData.inclusive.map((item, idx) => (
                             <li key={idx} className="text-sm">
@@ -299,7 +381,9 @@
                         </ul>
                     </div>
                     <div>
-                        <h4 className="font-bold text-blue-800 mb-3 flex items-center gap-2 border-b pb-1"><Sparkles className="w-4 h-4" /> Estratégias Exclusivas (AEE/Individual)</h4>
+                        <h4 className="font-bold text-blue-800 mb-3 flex items-center gap-2 border-b pb-1">
+                             {Sparkles && <Sparkles className="w-4 h-4" />} Estratégias Exclusivas (AEE/Individual)
+                        </h4>
                         <ul className="space-y-4">
                         {profileData.exclusive.map((item, idx) => (
                             <li key={idx} className="text-sm">
@@ -316,7 +400,9 @@
                 <div className="mb-8 break-inside-avoid">
                     <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wider mb-4 border-b-2 border-blue-100 pb-2">3. Plano de Alfabetização e Recursos Tecnológicos</h3>
                     <div className="mb-6">
-                    <h4 className="font-bold text-gray-800 flex items-center gap-2 mb-2"><BookOpen className="w-4 h-4" /> Método de Alfabetização Recomendado</h4>
+                    <h4 className="font-bold text-gray-800 flex items-center gap-2 mb-2">
+                         {BookOpen && <BookOpen className="w-4 h-4" />} Método de Alfabetização Recomendado
+                    </h4>
                     <div className="bg-gray-100 p-4 rounded border-l-4 border-green-500 text-gray-800 shadow-sm print-color-exact">
                         {literacyMethod}
                     </div>
@@ -327,7 +413,7 @@
                         <ul className="space-y-2">
                         {profileData.resources.map((res, i) => (
                             <li key={i} className="flex items-start gap-2 text-sm">
-                            <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" /> 
+                            {CheckCircle && <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />}
                             <span>{res}</span>
                             </li>
                         ))}
@@ -372,7 +458,7 @@
         );
         };
 
-        // --- COMPONENTE PRINCIPAL (APP) ---
+        // --- APLICAÇÃO PRINCIPAL ---
 
         function App() {
             const [currentStep, setCurrentStep] = useState(0);
@@ -453,9 +539,7 @@
             const handleResetRequest = () => setShowResetModal(true);
             const confirmReset = () => { setFormData(initialFormState); setReport(null); setCurrentStep(0); setShowResetModal(false); window.scrollTo(0, 0); };
             
-            // Função de impressão robusta
             const printReport = () => {
-                // Timeout para garantir que o navegador "perceba" as mudanças de CSS
                 setTimeout(() => {
                     window.print();
                 }, 100);
@@ -463,7 +547,6 @@
             
             const isCurrentStepValid = isStepValid();
 
-            // Função auxiliar para renderizar o conteúdo do passo atual
             const renderStepContent = () => {
                 switch(currentStep) {
                 case 0: return (
@@ -522,7 +605,7 @@
                         >
                             <div className="flex justify-between w-full items-start">
                             <span className={`font-bold ${formData.diagnosis === opt.id ? 'text-blue-800' : 'text-gray-800'}`}>{opt.label}</span>
-                            {formData.diagnosis === opt.id && <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />}
+                            {formData.diagnosis === opt.id && CheckCircle && <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />}
                             </div>
                             <p className="text-xs text-gray-500 leading-snug">{opt.desc}</p>
                         </button>
@@ -553,7 +636,7 @@
                     />
                     
                     <div className="bg-white p-4 border rounded-lg shadow-sm mb-4">
-                        <label className="block text-sm font-bold mb-2 flex items-center gap-2"><Bot className="w-4 h-4 text-purple-600"/> Comunicação Predominante</label>
+                        <label className="block text-sm font-bold mb-2 flex items-center gap-2">{Bot && <Bot className="w-4 h-4 text-purple-600"/>} Comunicação Predominante</label>
                         <div className="flex flex-col md:flex-row gap-4">
                         {['Verbal Fluente', 'Verbal com Dificuldades', 'Não-Verbal/Gestual'].map(opt => (
                             <label key={opt} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded w-full border border-transparent hover:border-gray-200">
@@ -566,13 +649,13 @@
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-sm font-bold mb-2 flex items-center gap-2"><Eye className="w-4 h-4 text-teal-600"/> Canal Sensorial Preferencial</label>
+                        <label className="block text-sm font-bold mb-2 flex items-center gap-2">{Eye && <Eye className="w-4 h-4 text-teal-600"/>} Canal Sensorial Preferencial</label>
                         <p className="text-xs text-gray-500 mb-2">Como o aluno melhor retém a informação?</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {[{ id: 'visual', label: 'Visual', icon: Eye, desc: "Aprende vendo (Imagens, vídeos, esquemas)" }, { id: 'auditivo', label: 'Auditivo', icon: Ear, desc: "Aprende ouvindo (Músicas, instruções verbais)" }, { id: 'cinestesico', label: 'Cinestésico', icon: Hand, desc: "Aprende fazendo (Toque, movimento, montagem)" }].map(s => (
                             <button key={s.id} type="button" onClick={() => handleCheckboxChange('sensoryProfile', s.id)} className={`p-4 border rounded-lg flex flex-col items-start gap-2 transition-all hover:shadow-md text-left ${formData.sensoryProfile.includes(s.id) ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white hover:bg-gray-50'}`}>
                             <div className="flex items-center gap-2">
-                                <s.icon className={`w-5 h-5 ${formData.sensoryProfile.includes(s.id) ? 'text-blue-600' : 'text-gray-500'}`}/>
+                                {s.icon && <s.icon className={`w-5 h-5 ${formData.sensoryProfile.includes(s.id) ? 'text-blue-600' : 'text-gray-500'}`}/>}
                                 <span className="font-semibold text-sm">{s.label}</span>
                             </div>
                             <span className="text-xs text-gray-500 leading-snug">{s.desc}</span>
@@ -582,7 +665,7 @@
                     </div>
 
                     <div className="bg-white p-4 border rounded-lg shadow-sm">
-                        <label className="block text-sm font-bold mb-2 flex items-center gap-2"><Activity className="w-4 h-4 text-red-500"/> Desenvolvimento Motor</label>
+                        <label className="block text-sm font-bold mb-2 flex items-center gap-2">{Activity && <Activity className="w-4 h-4 text-red-500"/>} Desenvolvimento Motor</label>
                         <select value={formData.motorSkills} onChange={(e) => handleInputChange('motorSkills', e.target.value)} className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-white">
                         <option value="adequado">Desenvolvimento Típico</option>
                         <option value="dificuldade fina">Dificuldade Motora Fina (Ex: pegar no lápis)</option>
@@ -612,7 +695,7 @@
                             onClick={() => handleCheckboxChange('interests', i.id)} 
                             className={`p-4 border rounded-xl flex flex-col items-center gap-2 transition-all hover:shadow-md text-center ${formData.interests.includes(i.id) ? 'bg-blue-600 text-white shadow-lg scale-105' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
                         >
-                            <i.icon className="w-6 h-6"/>
+                            {i.icon && <i.icon className="w-6 h-6"/>}
                             <span className="text-sm font-medium">{i.id}</span>
                             <span className={`text-[10px] leading-tight ${formData.interests.includes(i.id) ? 'text-blue-100' : 'text-gray-400'}`}>{i.desc}</span>
                         </button>
@@ -630,20 +713,20 @@
                 case 4: return (
                     <div className="animate-fadeIn">
                     <div className="bg-green-50 border border-green-200 p-6 rounded-xl text-center shadow-sm mb-6">
-                        <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-3" />
+                        {CheckCircle && <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-3" />}
                         <h2 className="text-2xl font-bold text-green-800">Diagnóstico Gerado com Sucesso!</h2>
                         <p className="text-green-700 mt-2">O assistente processou os dados e gerou um Plano de Atuação fundamentado. Revise as sugestões abaixo antes de imprimir.</p>
                     </div>
                     <div className="flex flex-col md:flex-row gap-4 justify-center items-center mb-8">
                         <button type="button" onClick={printReport} className="bg-blue-900 text-white px-8 py-4 rounded-lg font-bold shadow-lg hover:bg-blue-800 flex items-center gap-2 transition-transform hover:scale-105 active:scale-95">
-                        <Printer className="w-5 h-5" /> Exportar Relatório (PDF)
+                        {Printer && <Printer className="w-5 h-5" />} Exportar Relatório (PDF)
                         </button>
                         <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-1 rounded border">
-                            <AlertCircle className="w-4 h-4 text-blue-500"/>
+                            {AlertCircle && <AlertCircle className="w-4 h-4 text-blue-500"/>}
                             Ao clicar, selecione "Salvar como PDF"
                         </div>
                         <button type="button" onClick={handleResetRequest} className="bg-gray-200 text-gray-700 px-6 py-4 rounded-lg font-bold hover:bg-gray-300 flex items-center gap-2 active:bg-gray-400">
-                        <RefreshCw className="w-4 h-4" /> Novo Aluno
+                        {RefreshCw && <RefreshCw className="w-4 h-4" />} Novo Aluno
                         </button>
                     </div>
                     <div className="bg-white p-8 shadow-xl rounded-xl border border-gray-200 max-w-4xl mx-auto opacity-75 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer group" onClick={printReport}>
@@ -658,60 +741,6 @@
 
             return (
                 <div id="app-container" className="min-h-screen bg-gray-50 text-gray-900 font-sans w-full overflow-x-hidden flex flex-col">
-                {/* CSS CRÍTICO E ESTRUTURAL */}
-                <style>{`
-                    /* Reset para garantir altura total e evitar scroll duplo */
-                    html, body, #root, #app-container {
-                    min-height: 100vh;
-                    width: 100%;
-                    margin: 0;
-                    padding: 0;
-                    }
-
-                    /* Classe utilitária para garantir cores na impressão */
-                    .print-color-exact {
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                    }
-
-                    /* Estilos de Impressão Isolados */
-                    @media print {
-                    /* Esconde a UI de tela */
-                    .screen-only, header, footer, nav, .wizard-controls {
-                        display: none !important;
-                    }
-
-                    /* Mostra e formata a UI de impressão */
-                    #print-view { 
-                        display: block !important; 
-                        width: 100%;
-                        height: auto;
-                        position: absolute; /* Usamos absolute com top 0 para garantir que comece no início da folha */
-                        top: 0; 
-                        left: 0; 
-                        background: white; 
-                        color: black; 
-                        z-index: 9999;
-                    }
-                    
-                    /* Reseta o container pai para não cortar o conteúdo */
-                    body, html, #root, #app-container {
-                        height: auto !important;
-                        overflow: visible !important;
-                        background: white !important;
-                        display: block !important;
-                    }
-
-                    /* Configurações de página (A4) */
-                    @page { margin: 1.5cm; size: auto; }
-                    }
-
-                    /* Na tela normal, esconde a visão de impressão */
-                    @media screen {
-                    #print-view { display: none !important; }
-                    }
-                `}</style>
-
                 <ConfirmationModal isOpen={showResetModal} onClose={() => setShowResetModal(false)} onConfirm={confirmReset} title="Novo Atendimento" message="Deseja limpar os dados atuais? O relatório atual será perdido." />
 
                 {/* CONTAINER DE TELA (SCREEN VIEW) */}
@@ -740,16 +769,16 @@
                     {currentStep < 4 && !isGenerating && (
                         <div className="mt-8 flex justify-between items-center">
                         <button type="button" onClick={prevStep} disabled={currentStep === 0} className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors ${currentStep === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-200'}`}><ChevronLeft className="w-5 h-5" /> Voltar</button>
-                        <button type="button" onClick={nextStep} disabled={!isCurrentStepValid} className={`flex items-center gap-2 px-8 py-3 rounded-lg font-bold shadow-lg transition-all ${!isCurrentStepValid ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 active:scale-95'}`}>{!isCurrentStepValid && <Lock className="w-4 h-4 mr-1" />} {currentStep === 3 ? 'Gerar Diagnóstico' : 'Próximo'} {currentStep === 3 ? <Brain className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}</button>
+                        <button type="button" onClick={nextStep} disabled={!isCurrentStepValid} className={`flex items-center gap-2 px-8 py-3 rounded-lg font-bold shadow-lg transition-all ${!isCurrentStepValid ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 active:scale-95'}`}>{!isCurrentStepValid && Lock && <Lock className="w-4 h-4 mr-1" />} {currentStep === 3 ? 'Gerar Diagnóstico' : 'Próximo'} {currentStep === 3 ? (Brain && <Brain className="w-5 h-5" />) : (ChevronRight && <ChevronRight className="w-5 h-5" />)}</button>
                         </div>
                     )}
                     </main>
                     <footer className="text-center text-gray-400 py-6 text-sm bg-white border-t mt-auto w-full">&copy; 2024 Rede SESI de Educação</footer>
                 </div>
 
-                {/* CONTAINER DE IMPRESSÃO (PRINT VIEW) - Renderizado apenas se houver relatório */}
+                {/* CONTAINER DE IMPRESSÃO (PRINT VIEW) */}
                 {report && (
-                    <div id="print-view" className="hidden print:block print:w-full print:absolute print:top-0 print:left-0 print:bg-white print:z-50">
+                    <div id="print-view">
                     <ReportView data={report} />
                     </div>
                 )}
@@ -757,7 +786,6 @@
             );
         }
 
-        // --- RENDERIZAÇÃO FINAL ---
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
